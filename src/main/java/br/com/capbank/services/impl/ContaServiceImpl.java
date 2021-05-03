@@ -35,13 +35,16 @@ public class ContaServiceImpl implements ContaService{
 	private ContaMapper mapper;
 
 	@Override
-	public ContaDTO abreConta(ContaDTO contaDTO) {		
-		Date dataAtual = new Date();
-		contaDTO.setDataAbertura(dataAtual);
-		if (contaRepository.existsByNumeroAgenciaAndNumeroConta(contaDTO.getNumeroAgencia(), contaDTO.getNumeroConta())) {
-			throw new ResponseStatusException(HttpStatus.CONFLICT, "Conta já cadastrada");
+	public ContaDTO abreConta(ContaDTO contaDTO) {
+		if (isContaValida(contaDTO)) {
+			contaDTO.setDataAbertura(new Date());
+			if (contaRepository.existsByNumeroAgenciaAndNumeroConta(contaDTO.getNumeroAgencia(), contaDTO.getNumeroConta())) {
+				throw new ResponseStatusException(HttpStatus.CONFLICT, "Conta já cadastrada");
+			}
+			return mapper.toDTO(contaRepository.save(mapper.toEntity(contaDTO)));
 		}
-		return mapper.toDTO(contaRepository.save(mapper.toEntity(contaDTO)));
+		
+		throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Dados inválidos");
 	}
 
 	@Override
@@ -116,5 +119,14 @@ public class ContaServiceImpl implements ContaService{
 		return contaDTO;
 	}
 	
-	
+	private Boolean isContaValida(ContaDTO contaDTO) {
+		if (contaDTO.getNumeroConta() != null && contaDTO.getNumeroConta().matches("^\\d{6}") 
+			&& contaDTO.getNumeroAgencia() != null &&  contaDTO.getNumeroAgencia().matches("^\\d{4}")
+			&& Objects.nonNull(contaDTO.getCliente()) && contaDTO.getCliente().getCpf() != null 
+			&& contaDTO.getCliente().getCpf().matches("^\\d{11}")) {
+			
+			return Boolean.TRUE;
+		}
+		return Boolean.FALSE;
+	}
 }
