@@ -6,7 +6,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import br.com.capbank.dtos.ContaDTO;
 import br.com.capbank.dtos.DepositoDTO;
@@ -36,6 +38,9 @@ public class ContaServiceImpl implements ContaService{
 	public ContaDTO abreConta(ContaDTO contaDTO) {		
 		Date dataAtual = new Date();
 		contaDTO.setDataAbertura(dataAtual);
+		if (contaRepository.existsByNumeroAgenciaAndNumeroConta(contaDTO.getNumeroAgencia(), contaDTO.getNumeroConta())) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Conta já cadastrada");
+		}
 		return mapper.toDTO(contaRepository.save(mapper.toEntity(contaDTO)));
 	}
 

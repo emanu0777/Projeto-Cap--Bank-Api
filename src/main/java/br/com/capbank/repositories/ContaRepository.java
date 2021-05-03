@@ -9,5 +9,7 @@ import br.com.capbank.entitades.Conta;
 public interface ContaRepository extends JpaRepository<Conta, Integer>{
 	
 	public Conta findByNumeroAgenciaAndNumeroConta(String numeroAgencia, String numeroConta);
+	
+	public boolean existsByNumeroAgenciaAndNumeroConta(String numeroAgencia, String numeroConta);
 
 }

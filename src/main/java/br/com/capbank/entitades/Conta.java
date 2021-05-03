@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Entity(name = "tb_conta")
 public class Conta {
@@ -36,6 +37,8 @@ public class Conta {
 		this.idConta = idConta;
 	}
 	
+	@Column(name="numero_agencia")
+	@Size(max= 4, min= 4)
 	public String getNumeroAgencia() {
 		return numeroAgencia;
 	}
@@ -43,7 +46,9 @@ public class Conta {
 	public void setNumeroAgencia(String numeroAgencia) {
 		this.numeroAgencia = numeroAgencia;
 	}
-
+	
+	@Column(name="numero_conta")
+	@Size(max= 6, min= 6)
 	public String getNumeroConta() {
 		return numeroConta;
 	}

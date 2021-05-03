@@ -7,6 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Entity(name = "tb_cliente")
 public class Cliente {
@@ -37,6 +38,8 @@ public class Cliente {
 	}
 	
 	@NotNull
+	@Column(name="cpf")
+	@Size(max= 11, min= 11)
 	public String getCpf() {
 		return cpf;
 	}
