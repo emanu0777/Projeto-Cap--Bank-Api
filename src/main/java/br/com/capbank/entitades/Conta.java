@@ -19,11 +19,12 @@ import javax.validation.constraints.Size;
 @Entity(name = "tb_conta")
 public class Conta {
 	
-	private Integer idConta;
+	private Integer idConta; 
 	private String numeroAgencia;
 	private String numeroConta;
 	private Date dataAbertura;
 	private double saldo;
+	private double limiteChequeEspecial;
 	private Cliente cliente;
 	
 	@Id
@@ -75,6 +76,17 @@ public class Conta {
 	public void setSaldo(double saldo) {
 		this.saldo = saldo;
 	}
+	
+	@Column(name = "limite_cheque_especial", nullable = false)
+	@NotNull
+	public double getLimiteChequeEspecial() {
+		return limiteChequeEspecial;
+	}
+
+	public void setLimiteChequeEspecial(double limiteChequeEspecial) {
+		this.limiteChequeEspecial = limiteChequeEspecial;
+	}
+
 	@ManyToOne(fetch = FetchType.EAGER, cascade=CascadeType.ALL)
 	@JoinColumn(name = "id_cliente", nullable = false)
 	@NotNull

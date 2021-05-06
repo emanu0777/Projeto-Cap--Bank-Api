@@ -2,8 +2,6 @@ package br.com.capbank.dtos;
 
 import java.util.Date;
 
-import br.com.capbank.entitades.Cliente;
-
 public class ContaDTO {
 
 	private Integer idConta;
@@ -11,6 +9,7 @@ public class ContaDTO {
 	private String numeroConta;
 	private Date dataAbertura;
 	private double saldo;
+	private double limiteChequeEspecial = 4000.00;
 	private ClienteDTO cliente;
 	
 	
@@ -44,6 +43,12 @@ public class ContaDTO {
 	}
 	public void setSaldo(double saldo) {
 		this.saldo = saldo;
+	}
+	public double getLimiteChequeEspecial() {
+		return limiteChequeEspecial;
+	}
+	public void setLimiteChequeEspecial(double limiteChequeEspecial) {
+		this.limiteChequeEspecial = limiteChequeEspecial;
 	}
 	public ClienteDTO getCliente() {
 		return cliente;

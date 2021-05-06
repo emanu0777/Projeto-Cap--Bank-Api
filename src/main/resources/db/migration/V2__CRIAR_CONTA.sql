@@ -4,6 +4,7 @@ CREATE TABLE tb_conta (
 	numero_agencia char(4) NOT NULL,
 	dt_abertura timestamp NOT NULL,
 	saldo DOUBLE PRECISION,
+	limite_cheque_especial DOUBLE PRECISION DEFAULT 4000.00,
 	primary key(id_conta),
 	id_cliente int4 NOT NULL,
 	CONSTRAINT fk_cliente FOREIGN KEY (id_cliente) REFERENCES tb_cliente(id_cliente)
