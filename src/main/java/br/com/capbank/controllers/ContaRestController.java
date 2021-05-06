@@ -69,7 +69,7 @@ public class ContaRestController {
 	
 	
 	
-	@GetMapping(path = "agencia/{numeroAgencia}/conta/{numeroConta}/saldo/{valorSaida}/verificar")
+	@GetMapping(path = "agencia/{numeroAgencia}/conta/{numeroConta}/saldo/{valorSaida}/situacao")
 	public ResponseEntity<SituacaSaldoContaDTO> getSituacaoSaldoConta(@PathVariable("numeroAgencia") String numeroAgencia, 
 			@PathVariable("numeroConta") String numeroConta, @PathVariable("valorSaida") double valorSaida) {
 		SituacaSaldoContaDTO situacaSaldoContaDTO = contaService.verificaSituacaoSaldoAposMovimentacao(numeroAgencia, numeroConta, valorSaida);
