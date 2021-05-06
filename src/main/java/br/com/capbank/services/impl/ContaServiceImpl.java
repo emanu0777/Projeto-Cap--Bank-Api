@@ -29,7 +29,7 @@ public class ContaServiceImpl implements ContaService{
 
 	@Override
 	public ContaDTO abreConta(ContaDTO contaDTO) {
-		if (isContaValida(contaDTO)) {
+		if (isContaValida(contaDTO) && isvalorValido(contaDTO.getSaldo())) {
 			contaDTO.setDataAbertura(new Date());
 			if (contaRepository.existsByNumeroAgenciaAndNumeroConta(contaDTO.getNumeroAgencia(), contaDTO.getNumeroConta())) {
 				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Conta já cadastrada!");
@@ -70,7 +70,7 @@ public class ContaServiceImpl implements ContaService{
 		ContaDTO contaRetornada = buscaContaPorNumeroAngenciaNumeroConta(numeroAgencia, numeroConta);
 		if (Objects.nonNull(contaRetornada)) {			
 			SituacaSaldoContaDTO situacaoConta = verificaSituacaoSaldoAposMovimentacao(contaRetornada, valorSaque);
-			if (situacaoConta.getPermiteUsarChequeEspecial()) {				
+			if (situacaoConta.getPermiteUsarChequeEspecial() && isvalorValido(valorSaque)) {				
 				contaRetornada = debitaValor(contaRetornada, valorSaque);
 				return mapper.toDTO(contaRepository.save(mapper.toEntity(contaRetornada)));
 			}
@@ -99,7 +99,7 @@ public class ContaServiceImpl implements ContaService{
 																						   depositoDTO.getValorDeposito());
 		
 		
-		if (situacaSaldoContaDTO.getPermiteUsarChequeEspecial()) {			
+		if (situacaSaldoContaDTO.getPermiteUsarChequeEspecial() && isvalorValido(depositoDTO.getValorDeposito())) {			
 			contaOrigem = debitaValor(contaOrigem, depositoDTO.getValorDeposito());
 			contaDestino = creditaValor(contaDestino, depositoDTO.getValorDeposito());
 			contaOrigem  =  mapper.toDTO(contaRepository.save(mapper.toEntity(contaOrigem)));
@@ -181,6 +181,13 @@ public class ContaServiceImpl implements ContaService{
 		}
 		
 		return situacaSaldoConta;
+	}
+	
+	private Boolean isvalorValido(double valor) {
+		if (valor < 0) {
+			return Boolean.FALSE;
+		}
+		return Boolean.TRUE;
 	}
 	 
 }
