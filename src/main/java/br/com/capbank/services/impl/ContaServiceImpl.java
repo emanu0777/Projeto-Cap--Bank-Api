@@ -12,11 +12,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import br.com.capbank.dtos.ContaDTO;
 import br.com.capbank.dtos.DepositoDTO;
+import br.com.capbank.dtos.SituacaSaldoContaDTO;
 import br.com.capbank.entitades.Conta;
-import br.com.capbank.mapper.ClienteMapper;
 import br.com.capbank.mapper.ContaMapper;
 import br.com.capbank.repositories.ContaRepository;
-import br.com.capbank.services.ClienteService;
 import br.com.capbank.services.ContaService;
 
 @Service
@@ -26,12 +25,6 @@ public class ContaServiceImpl implements ContaService{
 	private ContaRepository contaRepository;
 	
 	@Autowired
-	private ClienteService clienteService;
-	
-	@Autowired
-	private ClienteMapper clienteMapper;
-	
-	@Autowired
 	private ContaMapper mapper;
 
 	@Override
@@ -39,7 +32,7 @@ public class ContaServiceImpl implements ContaService{
 		if (isContaValida(contaDTO)) {
 			contaDTO.setDataAbertura(new Date());
 			if (contaRepository.existsByNumeroAgenciaAndNumeroConta(contaDTO.getNumeroAgencia(), contaDTO.getNumeroConta())) {
-				throw new ResponseStatusException(HttpStatus.CONFLICT, "Conta já cadastrada");
+				throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Conta já cadastrada!");
 			}
 			return mapper.toDTO(contaRepository.save(mapper.toEntity(contaDTO)));
 		}
@@ -76,8 +69,13 @@ public class ContaServiceImpl implements ContaService{
 	public ContaDTO realizaSaque(String numeroAgencia, String numeroConta, double valorSaque) {
 		ContaDTO contaRetornada = buscaContaPorNumeroAngenciaNumeroConta(numeroAgencia, numeroConta);
 		if (Objects.nonNull(contaRetornada)) {			
-			contaRetornada = debitaValor(contaRetornada, valorSaque);
-			return mapper.toDTO(contaRepository.save(mapper.toEntity(contaRetornada)));
+			SituacaSaldoContaDTO situacaoConta = verificaSituacaoSaldoAposMovimentacao(contaRetornada, valorSaque);
+			if (situacaoConta.getPermiteUsarChequeEspecial()) {				
+				contaRetornada = debitaValor(contaRetornada, valorSaque);
+				return mapper.toDTO(contaRepository.save(mapper.toEntity(contaRetornada)));
+			}
+			
+			throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Operação não permitida!");
 		}
 		return null;
 	}
@@ -96,25 +94,31 @@ public class ContaServiceImpl implements ContaService{
 		if (!Objects.nonNull(contaOrigem) || !Objects.nonNull(contaDestino)) {
 			return null;
 		}
-		contaOrigem = debitaValor(contaOrigem, depositoDTO.getValorDeposito());
-		contaDestino = creditaValor(contaDestino, depositoDTO.getValorDeposito());
 		
-		contaOrigem  =  mapper.toDTO(contaRepository.save(mapper.toEntity(contaOrigem)));
-		contaDestino =  mapper.toDTO(contaRepository.save(mapper.toEntity(contaDestino)));
+		SituacaSaldoContaDTO situacaSaldoContaDTO = verificaSituacaoSaldoAposMovimentacao(contaOrigem, 
+																						   depositoDTO.getValorDeposito());
 		
-		depositoDTO.setContaOrigem(contaOrigem);
-		depositoDTO.setContaDestino(contaDestino);
 		
-		return depositoDTO;
+		if (situacaSaldoContaDTO.getPermiteUsarChequeEspecial()) {			
+			contaOrigem = debitaValor(contaOrigem, depositoDTO.getValorDeposito());
+			contaDestino = creditaValor(contaDestino, depositoDTO.getValorDeposito());
+			contaOrigem  =  mapper.toDTO(contaRepository.save(mapper.toEntity(contaOrigem)));
+			contaDestino =  mapper.toDTO(contaRepository.save(mapper.toEntity(contaDestino)));
+			depositoDTO.setContaOrigem(contaOrigem);
+			depositoDTO.setContaDestino(contaDestino);
+			return depositoDTO;
+		}
+		
+		throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Operação não permitida!");
 	}
 	
-	private ContaDTO debitaValor(ContaDTO contaDTO, double valorDebito) {
+	public ContaDTO debitaValor(ContaDTO contaDTO, double valorDebito) {
 		contaDTO.setSaldo(contaDTO.getSaldo() - valorDebito);
 		return contaDTO;
 		
 	}
 	
-	private ContaDTO creditaValor(ContaDTO contaDTO, double valorCredito) {
+	public ContaDTO creditaValor(ContaDTO contaDTO, double valorCredito) {
 		contaDTO.setSaldo(contaDTO.getSaldo() + valorCredito);
 		return contaDTO;
 	}
@@ -129,4 +133,54 @@ public class ContaServiceImpl implements ContaService{
 		}
 		return Boolean.FALSE;
 	}
+
+	@Override
+	public SituacaSaldoContaDTO verificaSituacaoSaldoAposMovimentacao(String numeroAgencia, String numeroConta,
+			double valorSaida) {
+		
+		ContaDTO contaDTO = mapper.toDTO(contaRepository.findByNumeroAgenciaAndNumeroConta(numeroAgencia, numeroConta));
+		SituacaSaldoContaDTO situacaSaldoConta = new SituacaSaldoContaDTO();
+		
+		situacaSaldoConta.setSaldoNegativado(Boolean.FALSE);
+		situacaSaldoConta.setPermiteUsarChequeEspecial(Boolean.FALSE);
+		
+		if (!Objects.nonNull(contaDTO)) {			
+			return null;
+		}
+
+		if (contaDTO.getSaldo() - valorSaida < 0) {
+			situacaSaldoConta.setSaldoNegativado(Boolean.TRUE);
+		}
+		
+		if ((contaDTO.getSaldo() - valorSaida + contaDTO.getLimiteChequeEspecial()) > 0) {
+			situacaSaldoConta.setPermiteUsarChequeEspecial(Boolean.TRUE);
+		}
+		
+		return situacaSaldoConta;
+	}
+	
+	
+	@Override
+	public SituacaSaldoContaDTO verificaSituacaoSaldoAposMovimentacao(ContaDTO contaDTO, double valorSaida) {
+		
+		SituacaSaldoContaDTO situacaSaldoConta = new SituacaSaldoContaDTO();
+		
+		situacaSaldoConta.setSaldoNegativado(Boolean.FALSE);
+		situacaSaldoConta.setPermiteUsarChequeEspecial(Boolean.FALSE);
+		
+		if (!Objects.nonNull(contaDTO)) {			
+			return null;
+		}
+
+		if (contaDTO.getSaldo() - valorSaida < 0) {
+			situacaSaldoConta.setSaldoNegativado(Boolean.TRUE);
+		}
+		
+		if ((contaDTO.getSaldo() - valorSaida + contaDTO.getLimiteChequeEspecial()) >= 0) {
+			situacaSaldoConta.setPermiteUsarChequeEspecial(Boolean.TRUE);
+		}
+		
+		return situacaSaldoConta;
+	}
+	 
 }

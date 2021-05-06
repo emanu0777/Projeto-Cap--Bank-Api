@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import br.com.capbank.dtos.ClienteContaDTO;
 import br.com.capbank.dtos.ContaDTO;
 import br.com.capbank.dtos.DepositoDTO;
+import br.com.capbank.dtos.SituacaSaldoContaDTO;
 import br.com.capbank.services.ContaService;
 
 @RestController
@@ -65,6 +65,19 @@ public class ContaRestController {
 			return ResponseEntity.ok(objAtualizado);
 		}
 		return ResponseEntity.notFound().build();
+	}
+	
+	
+	
+	@GetMapping(path = "agencia/{numeroAgencia}/conta/{numeroConta}/saldo/{valorSaida}/verificar")
+	public ResponseEntity<SituacaSaldoContaDTO> getSituacaoSaldoConta(@PathVariable("numeroAgencia") String numeroAgencia, 
+			@PathVariable("numeroConta") String numeroConta, @PathVariable("valorSaida") double valorSaida) {
+		SituacaSaldoContaDTO situacaSaldoContaDTO = contaService.verificaSituacaoSaldoAposMovimentacao(numeroAgencia, numeroConta, valorSaida);
+ 		if (Objects.nonNull(situacaSaldoContaDTO)) {		
+			return ResponseEntity.ok(situacaSaldoContaDTO);
+		}
+		return ResponseEntity.notFound().build();
+		
 	}
 	
 	@GetMapping(path = "agencia/{numeroAgencia}/conta/{numeroConta}/saque/{valorSaque}/sacar")
