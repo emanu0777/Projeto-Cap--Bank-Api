@@ -1,4 +1,4 @@
-# Projeto-Cap--Bank-Api
+# Projeto-CapBank-Api
   Esta é uma api de consumo do projeto CapBank
 
 ## Passos para rodar o projeto:
